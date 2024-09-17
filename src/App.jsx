@@ -1,4 +1,3 @@
-// import { useState, useEffect, useOptimistic, useTransition } from 'react'
 import { useState, useEffect, useOptimistic, useRef } from 'react'
 
 async function fetchTodos() {
@@ -27,7 +26,6 @@ async function addTodo(text) {
 function App() {
 
   const [todos, setTodos] = useState([]);
-  // const [newTodo, setNewTodo] = useState('');
 
   const formRef = useRef();
 
@@ -35,21 +33,13 @@ function App() {
     fetchTodos().then(setTodos)
   }, [])
 
-  // const [optimisticTodos, setOptimisticTodos] = useOptimistic(todos);
   const [optimisticTodos, simplifiedAddTodo] = useOptimistic(todos, 
     (state, text) => {
       return [...state, { id: Math.random().toString(36).slice(2), text }]
     }
   );
 
-  // const [isPending, startTransition] = useTransition();
-
-  // async function addNewTodo() {
   async function addNewTodo(formData) {
-    // setOptimisticTodos((todos) => [
-    //   ...todos,
-    //   { id: Math.random().toString(36).slice(2), text: newTodo }
-    // ]);
     const newTodo = formData.get('text');
     simplifiedAddTodo(newTodo);
     try {
@@ -59,7 +49,6 @@ function App() {
       console.log(error);
     } finally {
       formRef.current.reset();
-      // setNewTodo('');
     }
   }
 
@@ -69,17 +58,6 @@ function App() {
         {optimisticTodos.map(todo => <li key={todo.id}>{todo.text}</li>)}
       </ul>
       <div>
-        {/* <input
-          type='text'
-          value={newTodo}
-          disabled={isPending}
-          onChange={e => setNewTodo(e.target.value)}
-          onKeyUp={(e) => {
-            if (e.key === 'Enter') {
-              startTransition(() => addNewTodo());
-            }
-          }}
-        /> */}
         <form action={addNewTodo} ref={formRef}>
           <input
             type='text'
