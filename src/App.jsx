@@ -1,4 +1,4 @@
-import { useState, useEffect, useOptimistic, useRef } from 'react'
+import { useState, useEffect, useOptimistic, useRef, useActionState } from 'react'
 
 async function fetchTodos() {
   const response = await fetch('http://localhost:8080/api/todos')
@@ -39,7 +39,9 @@ function App() {
     }
   );
 
-  async function addNewTodo(formData) {
+  // async function addNewTodo(formData) {
+  async function addNewTodo() {
+    const formData = new FormData(formRef.current);
     const newTodo = formData.get('text');
     simplifiedAddTodo(newTodo);
     try {
@@ -52,16 +54,19 @@ function App() {
     }
   }
 
+  const [ actionState, addNewTodoWithState, isPending] = useActionState(addNewTodo);
+
   return (
     <>
       <ul>
         {optimisticTodos.map(todo => <li key={todo.id}>{todo.text}</li>)}
       </ul>
       <div>
-        <form action={addNewTodo} ref={formRef}>
+        <form action={addNewTodoWithState} ref={formRef}>
           <input
             type='text'
             name='text'
+            disabled={isPending}
           />
         </form>
       </div>
