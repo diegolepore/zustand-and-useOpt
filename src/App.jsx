@@ -1,4 +1,4 @@
-import { useState, useEffect, useOptimistic, useRef, useActionState } from 'react'
+import { create } from 'zustand';
 
 async function fetchTodos() {
   const response = await fetch('http://localhost:8080/api/todos')
@@ -23,52 +23,58 @@ async function addTodo(text) {
   return todo
 }
 
-function App() {
+const useTodos = create((set, get) => ({
+  todos: [],
+  isPending: false,
+  getTodos: async () => {
+    const todos = await fetchTodos();
+    set({ todos })
+  },
+  postTodo: async (text) => {
+    const originalTodos = get().todos;
 
-  const [todos, setTodos] = useState([]);
+    set({
+      isPending: true,
+      todos: [
+        ...get().todos,
+        { id: Math.random().toString(36).slice(2), text }
+      ],
+    })
 
-  const formRef = useRef();
-
-  useEffect(() => {
-    fetchTodos().then(setTodos)
-  }, [])
-
-  const [optimisticTodos, simplifiedAddTodo] = useOptimistic(todos, 
-    (state, text) => {
-      return [...state, { id: Math.random().toString(36).slice(2), text }]
-    }
-  );
-
-  // async function addNewTodo(formData) {
-  async function addNewTodo() {
-    const formData = new FormData(formRef.current);
-    const newTodo = formData.get('text');
-    simplifiedAddTodo(newTodo);
     try {
-      await addTodo(newTodo);
-      setTodos(await fetchTodos());
+      await addTodo(text);
+      set({ isPending: false, todos: await fetchTodos() });
     } catch (error) {
       console.log(error);
-    } finally {
-      formRef.current.reset();
+      set({ isPending: false, todos: originalTodos });
     }
   }
+}))
 
-  const [ actionState, addNewTodoWithState, isPending] = useActionState(addNewTodo);
+useTodos.getState().getTodos();
+
+
+function App() {
+
+  const { isPending, todos, postTodo } = useTodos();
 
   return (
     <>
       <ul>
-        {optimisticTodos.map(todo => <li key={todo.id}>{todo.text}</li>)}
+        {todos.map(todo => <li key={todo.id}>{todo.text}</li>)}
       </ul>
       <div>
-        <form action={addNewTodoWithState} ref={formRef}>
           <input
             type='text'
             name='text'
             disabled={isPending}
+            onKeyUp={event => {
+              if(event.key === 'Enter') {
+                postTodo(event.target.value)
+                event.target.value = ''
+              }
+            }}
           />
-        </form>
       </div>
     </>
   )
