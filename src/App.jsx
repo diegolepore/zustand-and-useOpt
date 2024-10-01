@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { create } from 'zustand';
 
 async function fetchTodos() {
@@ -55,11 +56,13 @@ const useTodos = create((set, get) => ({
   }
 }))
 
-useTodos.getState().getTodos();
-
 function App() {
 
   const { isPending, todos, postTodo } = useTodos();
+
+  useEffect(() => {
+    useTodos.getState().getTodos();
+  }, [])
 
   return (
     <>
@@ -71,9 +74,7 @@ function App() {
           5️⃣ Input for adding new todo 
           - Use `onKeyUp` to add a new todo when `Enter` is pressed
           - Use `disabled` to disable the input if `isPending` is true
-          - And also show a loading indicator if `isPending` is true
         */}
-        {isPending && <p>Loading...</p>}
         <input
           type='text'
           name='text'
