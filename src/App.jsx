@@ -23,6 +23,7 @@ async function addTodo(text) {
   return todo
 }
 
+// 1️⃣ Zustand store to manage todos and isPending state
 const useTodos = create((set, get) => ({
   todos: [],
   isPending: false,
@@ -33,6 +34,7 @@ const useTodos = create((set, get) => ({
   postTodo: async (text) => {
     const originalTodos = get().todos;
 
+    // 2️⃣ Optimistically update the todos state and set isPending to true
     set({
       isPending: true,
       todos: [
@@ -43,16 +45,17 @@ const useTodos = create((set, get) => ({
 
     try {
       await addTodo(text);
+      // 3️⃣ Fetch the updated todos from the server and set isPending to false
       set({ isPending: false, todos: await fetchTodos() });
     } catch (error) {
       console.log(error);
+      // 4️⃣ Revert to the original todos state and set isPending to false in case of an error
       set({ isPending: false, todos: originalTodos });
     }
   }
 }))
 
 useTodos.getState().getTodos();
-
 
 function App() {
 
@@ -64,17 +67,24 @@ function App() {
         {todos.map(todo => <li key={todo.id}>{todo.text}</li>)}
       </ul>
       <div>
-          <input
-            type='text'
-            name='text'
-            disabled={isPending}
-            onKeyUp={event => {
-              if(event.key === 'Enter') {
-                postTodo(event.target.value)
-                event.target.value = ''
-              }
-            }}
-          />
+        {/* 
+          5️⃣ Input for adding new todo 
+          - Use `onKeyUp` to add a new todo when `Enter` is pressed
+          - Use `disabled` to disable the input if `isPending` is true
+          - And also show a loading indicator if `isPending` is true
+        */}
+        {isPending && <p>Loading...</p>}
+        <input
+          type='text'
+          name='text'
+          disabled={isPending}
+          onKeyUp={event => {
+            if(event.key === 'Enter') {
+              postTodo(event.target.value)
+              event.target.value = ''
+            }
+          }}
+        />
       </div>
     </>
   )
